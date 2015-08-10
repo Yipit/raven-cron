@@ -55,7 +55,7 @@ Example
 `crontab -e`
 ```
 SENTRY_DSN=https://<your_key>:<your_secret>@app.getsentry.com/<your_project_id>
-@reboot cron-sentry ./my-process
+cron-sentry my-process --arg arg2
 ```
 
 License
