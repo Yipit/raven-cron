@@ -34,7 +34,7 @@ Example
 `crontab -e`
 ```
 SENTRY_DSN=https://<your_key>:<your_secret>@app.getsentry.com/<your_project_id>
-cron-sentry my-process --arg arg2
+0 4 * * * cron-sentry my-process --arg arg2
 ```
 
 
