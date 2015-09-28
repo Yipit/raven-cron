@@ -18,7 +18,7 @@ setup(
     ],
     url='http://github.com/yipit/cron-sentry',
     packages=find_packages(),
-    install_requires=['raven'],
+    install_requires=['raven', 'argparse'],
     data_files=[],
     entry_points={
         'console_scripts': [
