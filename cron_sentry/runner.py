@@ -35,7 +35,7 @@ parser.add_argument(
     '-M', '--max-message-length',
     type=int,
     default=DEFAULT_MAX_MESSAGE_LENGTH,
-    help='The maximum characters of a string that should be sent to Sentry (defaults to {})'.format(DEFAULT_MAX_MESSAGE_LENGTH),
+    help='The maximum characters of a string that should be sent to Sentry (defaults to {0})'.format(DEFAULT_MAX_MESSAGE_LENGTH),
 )
 parser.add_argument(
     '-q', '--quiet',
