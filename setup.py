@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
+from sys import version_info
 from cron_sentry.version import VERSION
+
+requirements = ['raven']
+if version_info < (2, 7, 0):
+    requirements.append('argparse')
 
 setup(
     name='cron-sentry',
@@ -18,7 +23,7 @@ setup(
     ],
     url='http://github.com/yipit/cron-sentry',
     packages=find_packages(),
-    install_requires=['raven', 'argparse'],
+    install_requires=requirements,
     data_files=[],
     entry_points={
         'console_scripts': [
