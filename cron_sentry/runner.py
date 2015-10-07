@@ -139,7 +139,7 @@ class CommandReporter(object):
 
         message = "Command \"%s\" failed" % (self.command,)
 
-        client = Client(dsn=self.dsn)
+        client = Client(dsn=self.dsn, string_max_length=None)
 
         client.captureMessage(
             message,
