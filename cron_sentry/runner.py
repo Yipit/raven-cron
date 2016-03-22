@@ -1,6 +1,6 @@
 import sys
 from getpass import getuser
-from os import getenv, path, SEEK_END
+from os import getenv, path, SEEK_END, environ
 from raven import Client
 from raven.transport import HTTPTransport
 from subprocess import call
@@ -76,6 +76,17 @@ def update_dsn(opts):
             return
 
 
+def _extra_from_env(env):
+    res = {}
+    env_var_prefix = 'CRON_SENTRY_EXTRA_'
+    for k, v in env.items():
+        if k.startswith(env_var_prefix):
+            extra_key = k[len(env_var_prefix):]
+            if extra_key:
+                res[extra_key] = v
+    return res
+
+
 def run(args=argv[1:]):
     opts = parser.parse_args(args)
 
@@ -98,7 +109,8 @@ def run(args=argv[1:]):
             cmd=cmd,
             dsn=opts.dsn,
             string_max_length=opts.string_max_length,
-            quiet=opts.quiet
+            quiet=opts.quiet,
+            extra=_extra_from_env(environ),
         )
         sys.exit(runner.run())
     else:
@@ -108,11 +120,14 @@ def run(args=argv[1:]):
 
 
 class CommandReporter(object):
-    def __init__(self, cmd, dsn, string_max_length, quiet=False):
+    def __init__(self, cmd, dsn, string_max_length, quiet=False, extra=None):
         self.dsn = dsn
         self.command = cmd
         self.string_max_length = string_max_length
         self.quiet = quiet
+        self.extra = {}
+        if extra is not None:
+            self.extra = extra
 
     def run(self):
         start = time()
@@ -146,18 +161,20 @@ class CommandReporter(object):
         message = "Command \"%s\" failed" % (self.command,)
 
         client = Client(transport=HTTPTransport, dsn=self.dsn, string_max_length=self.string_max_length)
+        extra = self.extra.copy()
+        extra.update({
+            'command': self.command,
+            'exit_status': exit_status,
+            'last_lines_stdout': last_lines_stdout,
+            'last_lines_stderr': last_lines_stderr,
+        })
 
         client.captureMessage(
             message,
             data={
                 'logger': 'cron',
             },
-            extra={
-                'command': self.command,
-                'exit_status': exit_status,
-                'last_lines_stdout': last_lines_stdout,
-                'last_lines_stderr': last_lines_stderr,
-            },
+            extra=extra,
             time_spent=elapsed
         )
 
