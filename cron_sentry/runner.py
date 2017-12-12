@@ -140,6 +140,10 @@ class CommandReporter(object):
 
     def run(self):
         start = time()
+        
+        # Print something on stdout if raven gives an error
+        import logging
+        logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s")
 
         with TemporaryFile() as stdout:
             with TemporaryFile() as stderr:
