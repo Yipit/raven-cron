@@ -54,6 +54,15 @@ parser.add_argument(
     default=False,
     help='Report to Sentry even if the task has succeeded',
 )
+
+parser.add_argument(
+    '--report-stderr',
+    action='store_true',
+    default=False,
+    help='Report when stderr is not empty'
+)
+
+
 parser.add_argument(
     'cmd',
     nargs=REMAINDER,
@@ -125,7 +134,8 @@ def run(args=argv[1:]):
             string_max_length=opts.string_max_length,
             quiet=opts.quiet,
             extra=_extra_from_env(environ),
-            report_all=opts.report_all
+            report_all=opts.report_all,
+            report_stderr=opts.report_stderr
         )
         sys.exit(runner.run())
     else:
@@ -135,13 +145,15 @@ def run(args=argv[1:]):
 
 
 class CommandReporter(object):
-    def __init__(self, cmd, dsn, string_max_length, quiet=False, extra=None, report_all=False):
+    def __init__(self, cmd, dsn, string_max_length, quiet=False, extra=None, report_all=False, report_stderr=False):
         self.dsn = dsn
         self.command = cmd
         self.string_max_length = string_max_length
         self.quiet = quiet
         self.extra = {}
         self.report_all = report_all
+        self.report_stderr = report_stderr
+        self.level = logging.INFO
         if extra is not None:
             self.extra = extra
 
@@ -152,21 +164,31 @@ class CommandReporter(object):
             with TemporaryFile() as stderr:
                 try:
                     exit_status = call(self.command, stdout=stdout, stderr=stderr)
+                    last_lines_stdout = self._get_last_lines(stdout)
+                    last_lines_stderr = self._get_last_lines(stderr)
                 except CommandNotFoundError as exc:
                     last_lines_stdout = ''
                     last_lines_stderr = str(exc)
                     exit_status = 127  # http://www.tldp.org/LDP/abs/html/exitcodes.html
-                else:
-                    last_lines_stdout = self._get_last_lines(stdout)
-                    last_lines_stderr = self._get_last_lines(stderr)
 
-                if self.report_all or exit_status != 0:
-                    elapsed = int((time() - start) * 1000)
-                    self.report(exit_status, last_lines_stdout, last_lines_stderr, elapsed)
+                elapsed = int((time() - start) * 1000)
 
                 if not self.quiet:
                     sys.stdout.write(last_lines_stdout)
                     sys.stderr.write(last_lines_stderr)
+
+                if self.report_all:
+                    self.report(exit_status, last_lines_stdout ,last_lines_stderr,elapsed)
+                    return exit_status
+
+                if exit_status != 0:
+                    self.level = logging.ERROR
+                    self.report(exit_status, last_lines_stdout, last_lines_stderr, elapsed)
+
+                if self.report_stderr and last_lines_stderr:
+                    self.level = logging.ERROR
+                    self.report(exit_status, last_lines_stdout, last_lines_stderr, elapsed)
+                    return exit_status
 
                 return exit_status
 
@@ -176,10 +198,10 @@ class CommandReporter(object):
 
         if exit_status == 0:
             message = "Command \"%s\" has succeeded" % (self.command,)
-            log_level = logging.INFO
+            log_level = self.level
         else:
             message = "Command \"%s\" has failed" % (self.command,)
-            log_level = logging.ERROR
+            log_level = self.level
 
         client = Client(transport=HTTPTransport, dsn=self.dsn, string_max_length=self.string_max_length)
         extra = self.extra.copy()
