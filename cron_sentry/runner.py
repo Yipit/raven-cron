@@ -58,7 +58,7 @@ parser.add_argument(
     '--output-all',
     action='store_true',
     default=False,
-    help='Send all stderr/stdout to stdout regardless of max message length',
+    help='Send all stderr/stdout output regardless of max message length',
 )
 parser.add_argument(
     'cmd',
