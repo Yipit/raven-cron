@@ -132,7 +132,7 @@ def run(args=argv[1:]):
             quiet=opts.quiet,
             extra=_extra_from_env(environ),
             report_all=opts.report_all,
-            stdout_all=opts.output_all
+            output_all=opts.output_all
         )
         sys.exit(runner.run())
     else:
