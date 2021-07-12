@@ -31,6 +31,8 @@ Usage
       -q, --quiet           Suppress all command output
       --version             show program's version number and exit
       --report-all          Report to Sentry even if the task has succeeded
+      --output-all          Send all stderr/stdout output regardless of max
+                            message length
 
     The Sentry server address can also be specified through the SENTRY_DSN
     environment variable (and the --dsn option can be omitted).
