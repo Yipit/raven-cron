@@ -23,7 +23,7 @@ parser = ArgumentParser(
     epilog=('The Sentry server address can also be specified through ' +
             'the SENTRY_DSN environment variable ' +
             '(and the --dsn option can be omitted).'),
-    usage='cron-sentry [-h] [--dsn SENTRY_DSN] [-M STRING_MAX_LENGTH] [--quiet] [--report-all] [--all-stdout] [--version] cmd [arg ...]',
+    usage='cron-sentry [-h] [--dsn SENTRY_DSN] [-M STRING_MAX_LENGTH] [--quiet] [--report-all] [--output-all] [--version] cmd [arg ...]',
 )
 parser.add_argument(
     '--dsn',
@@ -55,7 +55,7 @@ parser.add_argument(
     help='Report to Sentry even if the task has succeeded',
 )
 parser.add_argument(
-    '--all-stdout',
+    '--output-all',
     action='store_true',
     default=False,
     help='Send all stderr/stdout to stdout regardless of max message length',
@@ -132,7 +132,7 @@ def run(args=argv[1:]):
             quiet=opts.quiet,
             extra=_extra_from_env(environ),
             report_all=opts.report_all,
-            all_stdout=opts.all_stdout
+            stdout_all=opts.output_all
         )
         sys.exit(runner.run())
     else:
@@ -142,14 +142,14 @@ def run(args=argv[1:]):
 
 
 class CommandReporter(object):
-    def __init__(self, cmd, dsn, string_max_length, quiet=False, extra=None, report_all=False, all_stdout=False):
+    def __init__(self, cmd, dsn, string_max_length, quiet=False, extra=None, report_all=False, output_all=False):
         self.dsn = dsn
         self.command = cmd
         self.string_max_length = string_max_length
         self.quiet = quiet
         self.extra = {}
         self.report_all = report_all
-        self.all_stdout = all_stdout
+        self.output_all = output_all
         if extra is not None:
             self.extra = extra
 
@@ -173,7 +173,7 @@ class CommandReporter(object):
                     self.report(exit_status, last_lines_stdout, last_lines_stderr, elapsed)
 
                 if not self.quiet:
-                    if self.all_stdout:
+                    if self.output_all:
                         sys.stdout.write(self._get_all_lines(stdout))
                         sys.stderr.write(self._get_all_lines(stderr))
                     else:
